@@ -1,6 +1,6 @@
 # Contributing to TwistCoin Core
 
-TwistCoin Core is a small, independent fork of [Bitcoin Core](https://github.com/bitcoin/bitcoin). There's no established contributor community, review process, or CI infrastructure of its own yet — this file will grow as the project does.
+TwistCoin Core is a small, independent fork of [Bitcoin Core](https://github.com/bitcoin/bitcoin). There's no established contributor community, review process, or CI infrastructure of its own yet - this file will grow as the project does.
 
 In the meantime:
 

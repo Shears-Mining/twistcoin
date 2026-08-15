@@ -1,6 +1,6 @@
 # Security Policy
 
-TwistCoin Core is a small, independent fork of Bitcoin Core. It does not have Bitcoin Core's security team, disclosure process, or PGP-key contacts — those apply to the upstream project at https://github.com/bitcoin/bitcoin, not to this fork.
+TwistCoin Core is a small, independent fork of Bitcoin Core. It does not have Bitcoin Core's security team, disclosure process, or PGP-key contacts - those apply to the upstream project at https://github.com/bitcoin/bitcoin, not to this fork.
 
 ## Reporting a Vulnerability
 
