@@ -9,16 +9,16 @@ See the top-level [README](/README.md) for what TwistCoin is and how it differs 
 
 Running
 ---------------------
-The following are some helpful notes on how to run TwistCoin Core on your native platform. Binary names are unchanged from upstream Bitcoin Core (`bitcoind`, `bitcoin-cli`, etc.) — only the network they speak to is different.
+The following are some helpful notes on how to run TwistCoin Core on your native platform. The underlying binary targets are unchanged from upstream Bitcoin Core (`bitcoind`, `bitcoin-cli`, etc. - see [contrib/rename-binaries.sh](/contrib/rename-binaries.sh) for why), but after building, that script adds `twistcoind`/`twistcoin-cli` symlinks so the files you actually run are named for TwistCoin.
 
 ### Unix
 
-Unpack the files into a directory and run:
+Build, then run the rename script once (see the top-level [README](/README.md)), and run:
 
-- `bin/bitcoind` (headless node)
-- `bin/bitcoin-cli` (RPC client)
+- `bin/twistcoind` (headless node)
+- `bin/twistcoin-cli` (RPC client)
 
-The GUI (`bitcoin-qt`) is not built by default for TwistCoin (`-DBUILD_GUI=OFF`).
+The GUI (`bitcoin-qt`/`twistcoin-qt`) is not built by default for TwistCoin (`-DBUILD_GUI=OFF`).
 
 ### Need Help?
 

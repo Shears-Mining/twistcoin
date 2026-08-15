@@ -11,9 +11,18 @@ Building
 ```
 cmake -B build -DBUILD_GUI=OFF -DWITH_ZMQ=ON -DENABLE_WALLET=ON
 cmake --build build
+contrib/rename-binaries.sh
 ```
 
 See [doc/build-unix.md](doc/build-unix.md) and the other `doc/build-*.md` files (inherited from upstream Bitcoin Core, still accurate for the build system itself) for platform-specific instructions and dependencies.
+
+The underlying binary targets are still named `bitcoind`/`bitcoin-cli`/etc.
+(renaming them touches hundreds of files across the build system and
+functional test suite for no functional benefit - see
+[contrib/rename-binaries.sh](contrib/rename-binaries.sh)). That script adds
+`twistcoind`/`twistcoin-cli`/etc. symlinks next to them in `build/bin/` so
+the files you actually run are named for TwistCoin, without touching any
+source or build configuration.
 
 License
 -------
