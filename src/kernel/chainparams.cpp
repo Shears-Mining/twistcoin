@@ -142,15 +142,23 @@ public:
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
 
-        // Timestamp text ties the genesis to real Bitcoin block 962555, proving no
-        // mining happened before that block existed (same technique as Satoshi's
-        // original "Chancellor on brink..." headline). Bootstrap nBits (0x1e0ffff0,
-        // easy on purpose) may still be recalibrated once real ASIC hashrate is
-        // known, before the actual public launch - see tools/generate_genesis.py.
-        genesis = CreateGenesisBlock("TwistCoin 15/Aug/2026 - Bitcoin bloc 962555 000000000000000000022e46e8ef4eba72391b65a7409148a585a52e82d42106", TWIST_GENESIS_OUTPUT_SCRIPT, 1786798045, 530008u, 0x1e0ffff0, 1, 20 * COIN);
+        // Timestamp text ties the genesis to real Bitcoin block 962555 (leading
+        // zeros of the block hash dropped - they carry no information, and the
+        // full 64-hex-char hash makes the coinbase scriptSig exceed Bitcoin's
+        // 100-byte bad-cb-length consensus limit no matter how the surrounding
+        // text is trimmed), proving no mining happened before that block existed
+        // (same technique as Satoshi's original "Chancellor on brink..."
+        // headline). nBits (0x1b01cde6) is calibrated to a real 1.3 TH/s ASIC at
+        // 120s/block (D = hashrate * 120 / 2**32 =~ 36322) - genesis itself was
+        // found by that same ASIC via tools/genesis_stratum_server.py (real
+        // hardware, not a software grind - infeasible in software at this
+        // difficulty), so mainnet starts at the real sustained difficulty with no
+        // post-launch ramp-up period. nVersion is whatever the ASIC's
+        // version-rolling produced for that winning nonce, not 1.
+        genesis = CreateGenesisBlock("TwistCoin 15/Aug/2026 - Bitcoin bloc 962555 22e46e8ef4eba72391b65a7409148a585a52e82d42106", TWIST_GENESIS_OUTPUT_SCRIPT, 1786818238, 360683153u, 0x1b01cde6, 1040385, 20 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256{"00000916552e714497d3fd1cd0b6e353f119d1a8dc57002218b4ac12053320b5"});
-        assert(genesis.hashMerkleRoot == uint256{"48ea68a9b7303555aa4d7e1a50d4450cfd26977dfafc2787ce197726b8cb1fb0"});
+        assert(consensus.hashGenesisBlock == uint256{"0000000000007873245f642cdbb75776c0d9b8f55a706ccb53f81332067da8f7"});
+        assert(genesis.hashMerkleRoot == uint256{"eedab06ab3f9c01ed0120685d691b2e190d1a488a98da656aa8c6c33fa94b034"});
 
         // No DNS seed infrastructure yet - connect to your own node(s) via addnode=/connect=.
         vSeeds.clear();
