@@ -78,10 +78,21 @@ static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits
  * arbitrary, cosmetic value unique to TwistCoin (not a real key) - the
  * genesis coinbase output is provably unspendable regardless of content,
  * since Bitcoin Core never connects the genesis block's coinbase into the
- * UTXO set through the normal block-connection path. Shared across all
- * TwistCoin networks below.
+ * UTXO set through the normal block-connection path. Shared across
+ * testnet/regtest/signet below (mainnet uses a real key instead, see
+ * TWIST_MAINNET_GENESIS_OUTPUT_SCRIPT).
  */
 static const CScript TWIST_GENESIS_OUTPUT_SCRIPT = CScript() << "0441ecbfbcb6c88c9b0eeabee9bb0ed4ea8ba912f2dc4c6be71625037e410b535cca98f195ccae4c85fa8969d5866a304dca084082c57a5c11921ce8b6250fc863"_hex << OP_CHECKSIG;
+
+/**
+ * Real P2PK output script for the mainnet genesis, matching real Bitcoin's
+ * own genesis convention (paying to Satoshi's actual pubkey, not a
+ * placeholder) - still provably unspendable regardless of whose key it is,
+ * same reasoning as TWIST_GENESIS_OUTPUT_SCRIPT above, but this one is a
+ * real key the user controls, derived from and cross-checked against
+ * address tw1q4rzztuqef4ed4n7yq0f0gahme7gvga2unwrkwu.
+ */
+static const CScript TWIST_MAINNET_GENESIS_OUTPUT_SCRIPT = CScript() << "04191440969f973f172d72fc7279baba66567eb1d4ae13bcba68cc407c65665adcc8d629962ad6b5b65905e47b44c04c6a038f433fee3a96d0aa9ab4d0412b1878"_hex << OP_CHECKSIG;
 
 /**
  * Main network on which people trade goods and services.
@@ -154,11 +165,13 @@ public:
         // hardware, not a software grind - infeasible in software at this
         // difficulty), so mainnet starts at the real sustained difficulty with no
         // post-launch ramp-up period. nVersion is whatever the ASIC's
-        // version-rolling produced for that winning nonce, not 1.
-        genesis = CreateGenesisBlock("TwistCoin 15/Aug/2026 - Bitcoin bloc 962555 22e46e8ef4eba72391b65a7409148a585a52e82d42106", TWIST_GENESIS_OUTPUT_SCRIPT, 1786818238, 360683153u, 0x1b01cde6, 1040385, 20 * COIN);
+        // version-rolling produced for that winning nonce, not 1. Output script
+        // is TWIST_MAINNET_GENESIS_OUTPUT_SCRIPT - a real key the user controls
+        // (see that constant's comment), not the dummy placeholder pubkey.
+        genesis = CreateGenesisBlock("TwistCoin 15/Aug/2026 - Bitcoin bloc 962555 22e46e8ef4eba72391b65a7409148a585a52e82d42106", TWIST_MAINNET_GENESIS_OUTPUT_SCRIPT, 1786825636, 1923790317u, 0x1b01cde6, 204801, 20 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256{"0000000000007873245f642cdbb75776c0d9b8f55a706ccb53f81332067da8f7"});
-        assert(genesis.hashMerkleRoot == uint256{"eedab06ab3f9c01ed0120685d691b2e190d1a488a98da656aa8c6c33fa94b034"});
+        assert(consensus.hashGenesisBlock == uint256{"0000000000010248a159720bbe1efa86184e3df2b244a3987d3a7f4632dc2069"});
+        assert(genesis.hashMerkleRoot == uint256{"cd8d535e2a83f619cf7ba92fcf7d2845266abdee9bfc43ea6e14c5aef3f1860d"});
 
         // No DNS seed infrastructure yet - connect to your own node(s) via addnode=/connect=.
         vSeeds.clear();
