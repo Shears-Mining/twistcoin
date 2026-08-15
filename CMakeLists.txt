@@ -64,7 +64,25 @@ endif()
 
 set(COPYRIGHT_HOLDERS "The %s developers")
 set(COPYRIGHT_HOLDERS_FINAL "The ${CLIENT_NAME} developers")
-set(CLIENT_BUGREPORT "https://github.com/bitcoin/bitcoin/issues")
+set(CLIENT_BUGREPORT "https://github.com/TwistCoin/twistcoin-core/issues")
+
+# TwistCoin: symlink twistcoind/twistcoin-cli/etc. next to the compiled
+# bitcoind/bitcoin-cli/etc. binaries automatically after each is built,
+# without renaming the underlying target - renaming those would ripple
+# through hundreds of files in the functional test suite for no
+# functional benefit. See also contrib/rename-binaries.sh (a standalone
+# equivalent, e.g. for prebuilt/downloaded binaries).
+function(add_twistcoin_symlink target)
+  string(REPLACE "bitcoin" "twistcoin" twistcoin_name "${target}")
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+      "$<TARGET_FILE_NAME:${target}>"
+      "${twistcoin_name}"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:${target}>"
+    COMMENT "TwistCoin: linking ${twistcoin_name} -> $<TARGET_FILE_NAME:${target}>"
+    VERBATIM
+  )
+endfunction()
 
 #=============================
 # Language setup

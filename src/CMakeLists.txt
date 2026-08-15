@@ -169,6 +169,7 @@ if(ENABLE_WALLET)
       Boost::headers
     )
     install_binary_component(bitcoin-wallet HAS_MANPAGE)
+    add_twistcoin_symlink(bitcoin-wallet)
   endif()
 endif()
 
@@ -302,6 +303,7 @@ if(BUILD_BITCOIN_BIN)
   add_windows_application_manifest(bitcoin)
   target_link_libraries(bitcoin core_interface bitcoin_common bitcoin_util)
   install_binary_component(bitcoin HAS_MANPAGE)
+  add_twistcoin_symlink(bitcoin)
 endif()
 
 # Bitcoin Core bitcoind.
@@ -318,6 +320,7 @@ if(BUILD_DAEMON)
     $<TARGET_NAME_IF_EXISTS:bitcoin_wallet>
   )
   install_binary_component(bitcoind HAS_MANPAGE)
+  add_twistcoin_symlink(bitcoind)
 endif()
 if(ENABLE_IPC AND BUILD_DAEMON)
   add_executable(bitcoin-node
@@ -359,6 +362,7 @@ if(BUILD_CLI)
     libevent::extra
   )
   install_binary_component(bitcoin-cli HAS_MANPAGE)
+  add_twistcoin_symlink(bitcoin-cli)
 endif()
 
 
@@ -373,6 +377,7 @@ if(BUILD_TX)
     univalue
   )
   install_binary_component(bitcoin-tx HAS_MANPAGE)
+  add_twistcoin_symlink(bitcoin-tx)
 endif()
 
 
@@ -386,6 +391,7 @@ if(BUILD_UTIL)
     bitcoin_util
   )
   install_binary_component(bitcoin-util HAS_MANPAGE)
+  add_twistcoin_symlink(bitcoin-util)
 endif()
 
 
