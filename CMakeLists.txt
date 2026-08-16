@@ -53,7 +53,7 @@ set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
 project(TwistCoinCore
   VERSION ${CLIENT_VERSION_MAJOR}.${CLIENT_VERSION_MINOR}.${CLIENT_VERSION_BUILD}
   DESCRIPTION "TwistCoin client software"
-  HOMEPAGE_URL "https://github.com/theophile/twistcoin-core"
+  HOMEPAGE_URL "https://gitlab.com/TwistCoin/twistcoin-core"
   LANGUAGES NONE
 )
 
@@ -64,7 +64,7 @@ endif()
 
 set(COPYRIGHT_HOLDERS "The %s developers")
 set(COPYRIGHT_HOLDERS_FINAL "The ${CLIENT_NAME} developers")
-set(CLIENT_BUGREPORT "https://github.com/TwistCoin/twistcoin-core/issues")
+set(CLIENT_BUGREPORT "https://gitlab.com/TwistCoin/twistcoin-core/issues")
 
 # TwistCoin: symlink twistcoind/twistcoin-cli/etc. next to the compiled
 # bitcoind/bitcoin-cli/etc. binaries automatically after each is built,

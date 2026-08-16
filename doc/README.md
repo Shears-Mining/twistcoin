@@ -22,7 +22,7 @@ The GUI (`bitcoin-qt`/`twistcoin-qt`) is not built by default for TwistCoin (`-D
 
 ### Need Help?
 
-This is a small, independent project - there's no Bitcoin Wiki/StackExchange/IRC-channel equivalent yet. Open an issue at https://github.com/TwistCoin/twistcoin-core/issues.
+This is a small, independent project - there's no Bitcoin Wiki/StackExchange/IRC-channel equivalent yet. Open an issue at https://gitlab.com/TwistCoin/twistcoin-core/issues.
 
 Building
 ---------------------
