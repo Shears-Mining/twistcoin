@@ -9,8 +9,12 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 WORKDIR /src
 COPY . .
 
+# Override with --build-arg BUILD_JOBS=1 on memory-constrained hosts - each
+# parallel compile job can need well over 1GB, which adds up fast against
+# nproc on a small VPS (see the git history of this file for why).
+ARG BUILD_JOBS=""
 RUN cmake -B build -DBUILD_GUI=OFF -DWITH_ZMQ=ON -DENABLE_WALLET=OFF -DBUILD_TESTS=OFF -DENABLE_IPC=OFF -G Ninja \
-    && cmake --build build -j"$(nproc)"
+    && cmake --build build -j"${BUILD_JOBS:-$(nproc)}"
 
 FROM debian:bookworm-slim
 
