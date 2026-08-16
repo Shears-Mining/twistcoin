@@ -1,0 +1,7 @@
+.git
+*build*
+!build-aux
+!build_msvc
+releases
+guix-build-*
+ci/scratch
