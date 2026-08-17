@@ -87,7 +87,7 @@ struct BlockWaitOptions {
 
     /**
      * The wait method will not return a new template unless it has fees at
-     * least fee_threshold sats higher than the current template, or unless
+     * least fee_threshold wisps higher than the current template, or unless
      * the chain tip changes and the previous template is no longer valid.
      *
      * A caller may not be interested in templates with higher fees, and
