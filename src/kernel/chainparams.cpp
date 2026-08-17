@@ -173,8 +173,12 @@ public:
         assert(consensus.hashGenesisBlock == uint256{"0000000000010248a159720bbe1efa86184e3df2b244a3987d3a7f4632dc2069"});
         assert(genesis.hashMerkleRoot == uint256{"cd8d535e2a83f619cf7ba92fcf7d2845266abdee9bfc43ea6e14c5aef3f1860d"});
 
-        // No DNS seed infrastructure yet - connect to your own node(s) via addnode=/connect=.
-        vSeeds.clear();
+        // Static A/AAAA records, not a live crawler-backed seeder - plenty for
+        // a network this size, and each entry can be repointed independently
+        // if a server's IP ever changes, with no new software release needed.
+        vSeeds.emplace_back("node.twistcoin.org");
+        vSeeds.emplace_back("node1.twistcoin.org");
+        vSeeds.emplace_back("node2.twistcoin.org");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,65);  // 'T...'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,63);  // 'S...'
@@ -184,7 +188,10 @@ public:
 
         bech32_hrp = "tw";
 
-        vFixedSeeds.clear(); // no TwistCoin fixed-seed IP list yet (Bitcoin's real ones don't apply)
+        // Last-resort fallback if DNS itself is unreachable - frozen at build
+        // time (contrib/seeds/nodes_main.txt -> generate-seeds.py), unlike
+        // vSeeds above. Update both if a node's address ever changes.
+        vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
 
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
