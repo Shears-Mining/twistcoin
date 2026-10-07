@@ -235,8 +235,11 @@ public:
         consensus.SegwitHeight = 834624; // 00000000002b980fcd729daaa248fd9316a5200e9b367f4ff2c42453e84201ca
         consensus.MinBIP9WarningHeight = 836640; // segwit activation height + miner confirmation window
         consensus.powLimit = ArithToUint256(arith_uint256().SetCompact(0x1e0ffff0));
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks (cosmetic only, not deployed this round)
-        consensus.nPowTargetSpacing = 10 * 60;
+        // Mirror mainnet pacing: with the relaxed powLimit above, Bitcoin's two-week timespan
+        // would let powLimit * 4 * nPowTargetTimespan overflow 256 bits in
+        // CalculateNextWorkRequired() (caught by pow_tests' chainparams sanity check).
+        consensus.nPowTargetTimespan = 144 * 120;
+        consensus.nPowTargetSpacing = 120;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.enforce_BIP94 = false;
         consensus.fPowNoRetargeting = false;
@@ -441,20 +444,19 @@ public:
         vSeeds.clear();
 
         if (!options.challenge) {
-            bin = "512103ad5e0edad18cb1f0fc0d28a3d4f1f3e445640337489abb10404f2d1e086be430210359ef5021964fe22d6f8e05b2463c9540ce96883fe3b278760f048f5189f2e6c452ae"_hex_v_u8;
-            // Not deployed this round: no seeds of our own, and Bitcoin's real
-            // signet seeds/fixed-seed IPs are left cleared (see above) so this
-            // mode never contacts real infra.
+            // Default TwistCoin signet: 1-of-1 multisig of the signet operator's key
+            // (OP_1 <pubkey> OP_1 OP_CHECKMULTISIG), same shape as Bitcoin's 1-of-2 default.
+            // Not deployed yet: no seeds of our own.
+            bin = "512103dbea5b222cebda5dbd5e53346560e721afa0e6823dc10d26fad0d9f185dafb3251ae"_hex_v_u8;
 
-            consensus.nMinimumChainWork = uint256{"00000000000000000000000000000000000000000000000000000b463ea0a4b8"};
-            consensus.defaultAssumeValid = uint256{"00000008414aab61092ef93f1aacc54cf9e9f16af29ddad493b908a01ff5c329"}; // 293175
-            m_assumed_blockchain_size = 24;
-            m_assumed_chain_state_size = 4;
+            consensus.nMinimumChainWork = uint256{};
+            consensus.defaultAssumeValid = uint256{};
+            m_assumed_blockchain_size = 0;
+            m_assumed_chain_state_size = 0;
             chainTxData = ChainTxData{
-                // Data from RPC: getchaintxstats 4096 00000008414aab61092ef93f1aacc54cf9e9f16af29ddad493b908a01ff5c329
-                .nTime    = 1772055248,
-                .tx_count = 28676833,
-                .dTxRate  = 0.06736623436338929,
+                0,
+                0,
+                0,
             };
         } else {
             bin = *options.challenge;
@@ -477,15 +479,15 @@ public:
         m_chain_type = ChainType::SIGNET;
         consensus.signet_blocks = true;
         consensus.signet_challenge.assign(bin.begin(), bin.end());
-        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.nSubsidyHalvingInterval = 525600; // mirror mainnet economics
         consensus.BIP34Height = 1;
         consensus.BIP34Hash = uint256{};
         consensus.BIP65Height = 1;
         consensus.BIP66Height = 1;
         consensus.CSVHeight = 1;
         consensus.SegwitHeight = 1;
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-        consensus.nPowTargetSpacing = 10 * 60;
+        consensus.nPowTargetTimespan = 144 * 120; // mirror mainnet pacing
+        consensus.nPowTargetSpacing = 120;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.enforce_BIP94 = false;
         consensus.fPowNoRetargeting = false;
@@ -512,44 +514,32 @@ public:
         uint256 hash = h.GetHash();
         std::copy_n(hash.begin(), 4, pchMessageStart.begin());
 
-        nDefaultPort = 38333;
+        nDefaultPort = 38633;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1598918400, 52613770, 0x1e0377ae, 1, 50 * COIN);
+        genesis = CreateGenesisBlock("TwistCoin signet 07/Oct/2026 - public test network", TWIST_GENESIS_OUTPUT_SCRIPT, 1786797448, 1858398u, 0x1e0377ae, 1, 20 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256{"00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"});
-        assert(genesis.hashMerkleRoot == uint256{"4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"});
+        assert(consensus.hashGenesisBlock == uint256{"000002806b66f23283da7ce110c480bbee5e15b1cabd3bd56423fb25eb5a3fab"});
+        assert(genesis.hashMerkleRoot == uint256{"9c7c9159108535c81198c7a1f0bb5f2c51bd63d272df2a15a6c22f78b48b43b9"});
 
-        m_assumeutxo_data = {
-            {
-                .height = 160'000,
-                .hash_serialized = AssumeutxoHash{uint256{"fe0a44309b74d6b5883d246cb419c6221bcccf0b308c9b59b7d70783dbdf928a"}},
-                .m_chain_tx_count = 2289496,
-                .blockhash = uint256{"0000003ca3c99aff040f2563c2ad8f8ec88bd0fd6b8f0895cfaf1ef90353a62c"},
-            },
-            {
-                .height = 290'000,
-                .hash_serialized = AssumeutxoHash{uint256{"97267e000b4b876800167e71b9123f1529d13b14308abec2888bbd2160d14545"}},
-                .m_chain_tx_count = 28547497,
-                .blockhash = uint256{"0000000577f2741bb30cd9d39d6d71b023afbeb9764f6260786a97969d5c9ac0"},
-            }
-        };
+        m_assumeutxo_data = {}; // no snapshots for a brand-new chain
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,127); // 't...'
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,125); // 's...'
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,255);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
-        bech32_hrp = "tb";
+        bech32_hrp = "tws";
 
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
 
-        // Generated by headerssync-params.py on 2026-02-25.
+        // Same pacing and genesis date as mainnet, so same values as CMainParams
+        // (contrib/devtools/headerssync-params.py, BLOCK_INTERVAL=120s, GENESIS_TIME=2026-08-15).
         m_headers_sync_params = HeadersSyncParams{
-            .commitment_period = 620,
-            .redownload_buffer_size = 15724, // 15724/620 = ~25.4 commitments
+            .commitment_period = 209,
+            .redownload_buffer_size = 5096, // 5096/209 = ~24.4 commitments
         };
     }
 };
@@ -648,9 +638,9 @@ public:
         m_assumeutxo_data = {
             {   // For use by unit tests
                 .height = 110,
-                .hash_serialized = AssumeutxoHash{uint256{"b952555c8ab81fec46f3d4253b7af256d766ceb39fb7752b9d18cdf4a0141327"}},
+                .hash_serialized = AssumeutxoHash{uint256{"9e8257f2f3c2351d304efba05b44bef4af2f0d8bd4d8f7866de9920c6ab43a6a"}},
                 .m_chain_tx_count = 111,
-                .blockhash = uint256{"6affe030b7965ab538f820a56ef56c8149b7dc1d1c144af57113be080db7c397"},
+                .blockhash = uint256{"6dc101b1937508fe70df7c0bb19058afa2093de131ac4e1aa89b2897bef16fb2"},
             },
             {
                 // For use by fuzz target src/test/fuzz/utxo_snapshot.cpp
@@ -662,9 +652,9 @@ public:
             {
                 // For use by test/functional/feature_assumeutxo.py and test/functional/tool_bitcoin_chainstate.py
                 .height = 299,
-                .hash_serialized = AssumeutxoHash{uint256{"d2b051ff5e8eef46520350776f4100dd710a63447a8e01d917e92e79751a63e2"}},
+                .hash_serialized = AssumeutxoHash{uint256{"def25791e552611798d2efaec05258b1fd4df34ecdc48c078e23af48bffa5aa6"}},
                 .m_chain_tx_count = 334,
-                .blockhash = uint256{"7cc695046fec709f8c9394b6f928f81e81fd3ac20977bb68760fa1faa7916ea2"},
+                .blockhash = uint256{"3230ba076792a9e877d32e647a2aacba469499907c9a2b5ecfc45d118bd54342"},
             },
         };
 
