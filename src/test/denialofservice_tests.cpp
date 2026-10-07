@@ -153,7 +153,9 @@ BOOST_FIXTURE_TEST_CASE(stale_tip_peer_management, OutboundTest)
 
     const auto time_init{GetTime<std::chrono::seconds>()};
     SetMockTime(time_init);
-    const auto time_later{time_init + 3 * std::chrono::seconds{m_node.chainman->GetConsensus().nPowTargetSpacing} + 1s};
+    // TwistCoin: with 2-minute blocks, 3 block intervals is shorter than the 10-minute
+    // STALE_CHECK_INTERVAL in net_processing.cpp, so wait for whichever is longer.
+    const auto time_later{time_init + std::max(3 * std::chrono::seconds{m_node.chainman->GetConsensus().nPowTargetSpacing}, std::chrono::seconds{10min}) + 1s};
     connman->Init(options);
     std::vector<CNode *> vNodes;
 

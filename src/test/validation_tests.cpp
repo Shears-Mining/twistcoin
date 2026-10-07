@@ -24,7 +24,7 @@ BOOST_FIXTURE_TEST_SUITE(validation_tests, TestingSetup)
 static void TestBlockSubsidyHalvings(const Consensus::Params& consensusParams)
 {
     int maxHalvings = 64;
-    CAmount nInitialSubsidy = 50 * COIN;
+    CAmount nInitialSubsidy = 20 * COIN;
 
     CAmount nPreviousSubsidy = nInitialSubsidy * 2; // for height == 0
     BOOST_CHECK_EQUAL(nPreviousSubsidy, nInitialSubsidy * 2);
@@ -49,21 +49,26 @@ BOOST_AUTO_TEST_CASE(block_subsidy_test)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
     TestBlockSubsidyHalvings(chainParams->GetConsensus()); // As in main
-    TestBlockSubsidyHalvings(150); // As in regtest
+    TestBlockSubsidyHalvings(150); // As in Bitcoin's regtest
     TestBlockSubsidyHalvings(1000); // Just another interval
 }
 
 BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
+    const int halving_interval{chainParams->GetConsensus().nSubsidyHalvingInterval};
+    BOOST_REQUIRE_EQUAL(halving_interval % 600, 0);
     CAmount nSum = 0;
-    for (int nHeight = 0; nHeight < 14000000; nHeight += 1000) {
+    for (int nHeight = 0; nHeight < 64 * halving_interval; nHeight += 600) {
         CAmount nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
-        BOOST_CHECK(nSubsidy <= 50 * COIN);
-        nSum += nSubsidy * 1000;
-        BOOST_CHECK(MoneyRange(nSum));
+        BOOST_CHECK(nSubsidy <= 20 * COIN);
+        nSum += nSubsidy * 600;
     }
-    BOOST_CHECK_EQUAL(nSum, CAmount{2099999997690000});
+    // TwistCoin's total supply (~21,023,999.93 TWIST) slightly exceeds
+    // MAX_MONEY (21,000,000). MAX_MONEY only bounds individual amounts, never
+    // the total supply, so this is expected and harmless.
+    BOOST_CHECK_EQUAL(nSum, CAmount{2102399993167200});
+    BOOST_CHECK(!MoneyRange(nSum));
 }
 
 BOOST_AUTO_TEST_CASE(signet_parse_tests)
@@ -142,11 +147,11 @@ BOOST_AUTO_TEST_CASE(test_assumeutxo)
     }
 
     const auto out110 = *params->AssumeutxoForHeight(110);
-    BOOST_CHECK_EQUAL(out110.hash_serialized.ToString(), "b952555c8ab81fec46f3d4253b7af256d766ceb39fb7752b9d18cdf4a0141327");
+    BOOST_CHECK_EQUAL(out110.hash_serialized.ToString(), "9e8257f2f3c2351d304efba05b44bef4af2f0d8bd4d8f7866de9920c6ab43a6a");
     BOOST_CHECK_EQUAL(out110.m_chain_tx_count, 111U);
 
-    const auto out110_2 = *params->AssumeutxoForBlockhash(uint256{"6affe030b7965ab538f820a56ef56c8149b7dc1d1c144af57113be080db7c397"});
-    BOOST_CHECK_EQUAL(out110_2.hash_serialized.ToString(), "b952555c8ab81fec46f3d4253b7af256d766ceb39fb7752b9d18cdf4a0141327");
+    const auto out110_2 = *params->AssumeutxoForBlockhash(uint256{"6dc101b1937508fe70df7c0bb19058afa2093de131ac4e1aa89b2897bef16fb2"});
+    BOOST_CHECK_EQUAL(out110_2.hash_serialized.ToString(), "9e8257f2f3c2351d304efba05b44bef4af2f0d8bd4d8f7866de9920c6ab43a6a");
     BOOST_CHECK_EQUAL(out110_2.m_chain_tx_count, 111U);
 }
 

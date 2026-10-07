@@ -18,17 +18,18 @@ BOOST_FIXTURE_TEST_SUITE(pow_tests, BasicTestingSetup)
 BOOST_AUTO_TEST_CASE(get_next_work)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
-    int64_t nLastRetargetTime = 1261130161; // Block #30240
+    // TwistCoin mainnet blocks (144-block retarget interval, 120 s spacing).
+    int64_t nLastRetargetTime = 1786825636; // Block #0
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 32255;
-    pindexLast.nTime = 1262152739;  // Block #32255
-    pindexLast.nBits = 0x1d00ffff;
+    pindexLast.nHeight = 143;
+    pindexLast.nTime = 1786850135;  // Block #143
+    pindexLast.nBits = 0x1b01cde6;
 
     // Here (and below): expected_nbits is calculated in
     // CalculateNextWorkRequired(); redoing the calculation here would be just
     // reimplementing the same code that is written in pow.cpp. Rather than
     // copy that code, we just hardcode the expected result.
-    unsigned int expected_nbits = 0x1d00d86aU;
+    unsigned int expected_nbits = 0x1b028eddU; // Block #144
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
 }
@@ -37,12 +38,14 @@ BOOST_AUTO_TEST_CASE(get_next_work)
 BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
-    int64_t nLastRetargetTime = 1231006505; // Block #0
+    // NOTE: not actual TwistCoin blocks - the chain has never been close to powLimit.
+    // A period at powLimit that took 4x the target timespan must stay at powLimit.
+    int64_t nLastRetargetTime = 1786825636;
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 2015;
-    pindexLast.nTime = 1233061996;  // Block #2015
-    pindexLast.nBits = 0x1d00ffff;
-    unsigned int expected_nbits = 0x1d00ffffU;
+    pindexLast.nHeight = 143;
+    pindexLast.nTime = 1786825636 + 4 * 144 * 120;
+    pindexLast.nBits = 0x1e0ffff0;
+    unsigned int expected_nbits = 0x1e0ffff0U;
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
 }
@@ -51,12 +54,12 @@ BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
 BOOST_AUTO_TEST_CASE(get_next_work_lower_limit_actual)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
-    int64_t nLastRetargetTime = 1279008237; // Block #66528
+    int64_t nLastRetargetTime = 1791007467; // Block #33984
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 68543;
-    pindexLast.nTime = 1279297671;  // Block #68543
-    pindexLast.nBits = 0x1c05a3f4;
-    unsigned int expected_nbits = 0x1c0168fdU;
+    pindexLast.nHeight = 34127;
+    pindexLast.nTime = 1791008910;  // Block #34127 (period took ~8% of the target timespan)
+    pindexLast.nBits = 0x1a2b81c3;
+    unsigned int expected_nbits = 0x1a0ae070U; // Block #34128
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
     // Test that reducing nbits further would not be a PermittedDifficultyTransition.
@@ -68,12 +71,12 @@ BOOST_AUTO_TEST_CASE(get_next_work_lower_limit_actual)
 BOOST_AUTO_TEST_CASE(get_next_work_upper_limit_actual)
 {
     const auto chainParams = CreateChainParams(*m_node.args, ChainType::MAIN);
-    int64_t nLastRetargetTime = 1263163443; // NOTE: Not an actual block time
+    int64_t nLastRetargetTime = 1791013432; // Block #34272
     CBlockIndex pindexLast;
-    pindexLast.nHeight = 46367;
-    pindexLast.nTime = 1269211443;  // Block #46367
-    pindexLast.nBits = 0x1c387f6f;
-    unsigned int expected_nbits = 0x1d00e1fdU;
+    pindexLast.nHeight = 34415;
+    pindexLast.nTime = 1791103492;  // Block #34415 (period took ~5.2x the target timespan)
+    pindexLast.nBits = 0x1a02b81c;
+    unsigned int expected_nbits = 0x1a0ae070U; // Block #34416
     BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, chainParams->GetConsensus()), expected_nbits);
     BOOST_CHECK(PermittedDifficultyTransition(chainParams->GetConsensus(), pindexLast.nHeight+1, pindexLast.nBits, expected_nbits));
     // Test that increasing nbits further would not be a PermittedDifficultyTransition.

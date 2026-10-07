@@ -283,6 +283,10 @@ ChainTestingSetup::ChainTestingSetup(const ChainType chainType, TestOpts opts)
             chainman_opts.script_execution_cache_bytes = 0;
             chainman_opts.signature_cache_bytes = 0;
         }
+        // TwistCoin: let tests override the (still zero) mainnet minimum chain work.
+        if (const auto min_work{m_node.args->GetArg("-minimumchainwork")}) {
+            chainman_opts.minimum_chain_work = UintToArith256(*Assert(uint256::FromUserHex(*min_work)));
+        }
         const BlockManager::Options blockman_opts{
             .chainparams = chainman_opts.chainparams,
             .blocks_dir = m_args.GetBlocksDirPath(),
@@ -379,7 +383,7 @@ TestChain100Setup::TestChain100Setup(
     TestOpts opts)
     : TestingSetup{ChainType::REGTEST, opts}
 {
-    SetMockTime(1598887952);
+    SetMockTime(1786800000); // shortly after the TwistCoin regtest genesis block (1786797448)
     constexpr std::array<unsigned char, 32> vchKey = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
     coinbaseKey.Set(vchKey.begin(), vchKey.end(), true);
@@ -391,7 +395,7 @@ TestChain100Setup::TestChain100Setup(
         LOCK(::cs_main);
         assert(
             m_node.chainman->ActiveChain().Tip()->GetBlockHash().ToString() ==
-            "0c8c5f79505775a0f6aed6aca2350718ceb9c6f2c878667864d5c7a6d8ffa2a6");
+            "4887849bd020621dde2462f6c4de978d8f3e91a692daf768bf667d5b35f8ee20");
     }
 }
 

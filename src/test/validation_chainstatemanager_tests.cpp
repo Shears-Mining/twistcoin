@@ -169,7 +169,13 @@ BOOST_FIXTURE_TEST_CASE(chainstatemanager_rebalance_caches, TestChain100Setup)
     BOOST_CHECK_CLOSE(double(c2.m_coinsdb_cache_size_bytes), max_cache * 0.95, 1);
 }
 
-BOOST_FIXTURE_TEST_CASE(chainstatemanager_ibd_exit_after_loading_blocks, ChainTestingSetup)
+// TwistCoin: mainnet nMinimumChainWork is still zero, so "MinimumChainWork() - 1" below would
+// underflow. Run with a non-zero minimum chain work instead.
+struct MinimumChainWorkSetup : ChainTestingSetup {
+    MinimumChainWorkSetup() : ChainTestingSetup{ChainType::MAIN, {.extra_args = {"-minimumchainwork=0x100"}}} {}
+};
+
+BOOST_FIXTURE_TEST_CASE(chainstatemanager_ibd_exit_after_loading_blocks, MinimumChainWorkSetup)
 {
     CBlockIndex tip;
     ChainstateManager& chainman{*Assert(m_node.chainman)};
