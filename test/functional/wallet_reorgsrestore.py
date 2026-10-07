@@ -153,7 +153,12 @@ class ReorgsRestoreTest(BitcoinTestFramework):
         self.connect_nodes(0, 2)
 
         # Send a tx to be unconfirmed later
+        # TwistCoin: with 20-coin block rewards the wallet would otherwise pick the
+        # txid_conflict_from output spent below, so keep it locked while sending.
+        conflict_out = next(tx_out["vout"] for tx_out in self.nodes[0].gettransaction(txid_conflict_from)["details"] if tx_out["amount"] == Decimal("10"))
+        self.nodes[0].lockunspent(False, [{"txid": txid_conflict_from, "vout": conflict_out}])
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), Decimal("10"))
+        self.nodes[0].lockunspent(True, [{"txid": txid_conflict_from, "vout": conflict_out}])
         tx = self.nodes[0].gettransaction(txid)
         self.generate(self.nodes[0], 4, sync_fun=self.no_op)
         self.sync_blocks([self.nodes[0], self.nodes[2]])

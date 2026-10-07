@@ -53,7 +53,7 @@ MAX_STANDARD_TX_SIGOPS = 4000
 MAX_STANDARD_TX_WEIGHT = 400000
 
 # Genesis block time (regtest)
-TIME_GENESIS_BLOCK = 1296688602
+TIME_GENESIS_BLOCK = 1786797448
 
 MAX_FUTURE_BLOCK_TIME = 2 * 60 * 60
 
@@ -69,7 +69,10 @@ NORMAL_GBT_REQUEST_PARAMS = {"rules": ["segwit"]}
 VERSIONBITS_LAST_OLD_BLOCK_VERSION = 4
 MIN_BLOCKS_TO_KEEP = 288
 
-REGTEST_RETARGET_PERIOD = 150
+# Initial block subsidy (in coins) and subsidy halving interval used by TwistCoin
+# (src/validation.cpp GetBlockSubsidy(), nSubsidyHalvingInterval in chainparams).
+INITIAL_BLOCK_SUBSIDY = 20
+REGTEST_RETARGET_PERIOD = 525600
 
 REGTEST_N_BITS = 0x207fffff  # difficulty retargeting is disabled in REGTEST chainparams"
 REGTEST_TARGET = 0x7fffff0000000000000000000000000000000000000000000000000000000000
@@ -169,7 +172,7 @@ def script_BIP34_coinbase_height(height):
     return CScript([CScriptNum(height)])
 
 
-def create_coinbase(height, pubkey=None, *, script_pubkey=None, extra_output_script=None, fees=0, nValue=50, halving_period=REGTEST_RETARGET_PERIOD):
+def create_coinbase(height, pubkey=None, *, script_pubkey=None, extra_output_script=None, fees=0, nValue=INITIAL_BLOCK_SUBSIDY, halving_period=REGTEST_RETARGET_PERIOD):
     """Create a coinbase transaction.
 
     If pubkey is passed in, the coinbase output will be a P2PK output;
@@ -182,7 +185,7 @@ def create_coinbase(height, pubkey=None, *, script_pubkey=None, extra_output_scr
     coinbase.vin.append(CTxIn(NULL_OUTPOINT, script_BIP34_coinbase_height(height), MAX_SEQUENCE_NONFINAL))
     coinbaseoutput = CTxOut()
     coinbaseoutput.nValue = nValue * COIN
-    if nValue == 50:
+    if nValue == INITIAL_BLOCK_SUBSIDY:
         halvings = int(height / halving_period)
         coinbaseoutput.nValue >>= halvings
         coinbaseoutput.nValue += fees

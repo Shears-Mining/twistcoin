@@ -159,6 +159,10 @@ class WalletGroupTest(BitcoinTestFramework):
         self.sync_all()
         self.generate(self.nodes[0], 1)
 
+        # TwistCoin: mature more block rewards so node0 can fund the outputs below
+        # (this test was written for 50-coin block rewards).
+        self.generate(self.nodes[0], 25)
+
         self.log.info("Fill a wallet with 10,000 outputs corresponding to the same scriptPubKey")
         for _ in range(5):
             raw_tx = self.nodes[0].createrawtransaction([{"txid":"0"*64, "vout":0}], [{addr2[0]: 0.05}])

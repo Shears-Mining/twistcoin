@@ -10,7 +10,7 @@ the node should pretend that it does not have it to avoid fingerprinting.
 
 import time
 
-from test_framework.blocktools import (create_block, create_coinbase)
+from test_framework.blocktools import (TIME_GENESIS_BLOCK, create_block, create_coinbase)
 from test_framework.messages import CInv, MSG_BLOCK
 from test_framework.p2p import (
     P2PInterface,
@@ -66,7 +66,9 @@ class P2PFingerprintTest(BitcoinTestFramework):
         node0 = self.nodes[0].add_p2p_connection(P2PInterface())
 
         # Set node time to 60 days ago
-        self.nodes[0].setmocktime(int(time.time()) - 60 * 24 * 60 * 60)
+        # TwistCoin: but never before the regtest genesis block (2026-08-15), which is
+        # still more than a month old, as this test requires.
+        self.nodes[0].setmocktime(max(int(time.time()) - 60 * 24 * 60 * 60, TIME_GENESIS_BLOCK + 1))
 
         # Generating a chain of 10 blocks
         block_hashes = self.generatetoaddress(self.nodes[0], 10, self.nodes[0].get_deterministic_priv_key().address)

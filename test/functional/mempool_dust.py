@@ -128,10 +128,10 @@ class DustRelayFeeTest(BitcoinTestFramework):
         for dustfee_sat_kvb in (DUST_RELAY_TX_FEE, 0, 1, 66, 500, 1337, 12345, 21212, 333333):
             dustfee_btc_kvb = dustfee_sat_kvb / Decimal(COIN)
             if dustfee_sat_kvb == DUST_RELAY_TX_FEE:
-                self.log.info(f"Test default dust limit setting ({dustfee_sat_kvb} sat/kvB)...")
+                self.log.info(f"Test default dust limit setting ({dustfee_sat_kvb} wisp/kvB)...")
             else:
                 dust_parameter = f"-dustrelayfee={dustfee_btc_kvb:.8f}"
-                self.log.info(f"Test dust limit setting {dust_parameter} ({dustfee_sat_kvb} sat/kvB)...")
+                self.log.info(f"Test dust limit setting {dust_parameter} ({dustfee_sat_kvb} wisp/kvB)...")
                 self.restart_node(0, extra_args=[dust_parameter, "-permitbaremultisig"])
 
             for output_script, description in output_scripts:

@@ -36,8 +36,8 @@ class WalletHDTest(BitcoinTestFramework):
         assert_equal(change_addrV["hdkeypath"], "m/84h/1h/0h/1/0")
 
         # Import a non-HD private key in the HD wallet
-        non_hd_add = 'bcrt1qmevj8zfx0wdvp05cqwkmr6mxkfx60yezwjksmt'
-        non_hd_key = 'cS9umN9w6cDMuRVYdbkfE4c7YUFLJRoXMfhQ569uY4odiQbVN8Rt'
+        non_hd_add = 'twrt1qmevj8zfx0wdvp05cqwkmr6mxkfx60yezya3k3c'
+        non_hd_key = 'eoRzuwvKu4sZVhhqUp4wxr7uXRTmf899xjfV2MhRPis2DhoNaEvj'
         wallet_importprivkey(self.nodes[1], non_hd_key, "now")
 
         # This should be enough to keep the master key and the non-HD key

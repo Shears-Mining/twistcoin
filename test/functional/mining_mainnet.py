@@ -19,14 +19,13 @@ from test_framework.util import (
     assert_equal,
 )
 from test_framework.blocktools import (
-    DIFF_1_N_BITS,
-    DIFF_1_TARGET,
-    DIFF_4_N_BITS,
-    DIFF_4_TARGET,
     create_coinbase,
     nbits_str,
+    script_BIP34_coinbase_height,
     target_str
 )
+from test_framework.script import CScript
+from test_framework.messages import uint256_from_compact
 
 from test_framework.messages import (
     CBlock,
@@ -38,6 +37,46 @@ import os
 
 # See data/README.md
 COINBASE_SCRIPT_PUBKEY="76a914eadbac7f36c37e39361168b7aaee3cb24a25312d88ac"
+
+# TwistCoin: one retarget period is 144 blocks, starting at the mainnet genesis
+# difficulty. The alternate chain's first period was mined fast enough to hit
+# the 4x clamp, so the next target is a quarter of the genesis one.
+RETARGET_PERIOD = 144
+GENESIS_N_BITS = 0x1b01cde6
+GENESIS_TARGET = uint256_from_compact(GENESIS_N_BITS)
+NEXT_TARGET = GENESIS_TARGET * (144 * 120 // 4) // (144 * 120)
+
+
+def compact_from_target(target):
+    """Mirrors arith_uint256::GetCompact()."""
+    size = (target.bit_length() + 7) // 8
+    compact = target << (8 * (3 - size)) if size <= 3 else target >> (8 * (size - 3))
+    if compact & 0x00800000:
+        compact >>= 8
+        size += 1
+    return compact | (size << 24)
+
+
+def get_difficulty(bits):
+    """Mirrors GetDifficulty() in src/rpc/blockchain.cpp."""
+    shift = (bits >> 24) & 0xff
+    diff = 0x0000ffff / (bits & 0x00ffffff)
+    while shift < 29:
+        diff *= 256.0
+        shift += 1
+    while shift > 29:
+        diff /= 256.0
+        shift -= 1
+    return diff
+
+
+NEXT_N_BITS = compact_from_target(NEXT_TARGET)
+NEXT_TARGET = uint256_from_compact(NEXT_N_BITS)  # as rounded by the compact encoding
+
+
+def assert_difficulty(actual, bits):
+    expected = get_difficulty(bits)
+    assert abs(float(actual) - expected) <= expected * 1e-12, f"{actual} != {expected}"
 
 class MiningMainnetTest(BitcoinTestFramework):
 
@@ -56,12 +95,14 @@ class MiningMainnetTest(BitcoinTestFramework):
     def mine(self, height, prev_hash, blocks, node):
         self.log.debug(f"height={height}")
         block = CBlock()
-        block.nVersion = 0x20000000
+        block.nVersion = blocks['versions'][height - 1]  # the ASIC used version-rolling
         block.hashPrevBlock = int(prev_hash, 16)
         block.nTime = blocks['timestamps'][height - 1]
-        block.nBits = DIFF_1_N_BITS if height < 2016 else DIFF_4_N_BITS
+        block.nBits = GENESIS_N_BITS if height < RETARGET_PERIOD else NEXT_N_BITS
         block.nNonce = blocks['nonces'][height - 1]
-        block.vtx = [create_coinbase(height=height, script_pubkey=bytes.fromhex(COINBASE_SCRIPT_PUBKEY), halving_period=210000)]
+        block.vtx = [create_coinbase(height=height, script_pubkey=bytes.fromhex(COINBASE_SCRIPT_PUBKEY))]
+        # The ASIC filled a 4-byte extranonce right after the BIP34 height.
+        block.vtx[0].vin[0].scriptSig = CScript(bytes(script_BIP34_coinbase_height(height)) + bytes.fromhex(blocks['extranonces'][height - 1]))
         # The alternate mainnet chain was mined with non-timelocked coinbase txs.
         block.vtx[0].nLockTime = 0
         block.vtx[0].vin[0].nSequence = SEQUENCE_FINAL
@@ -86,39 +127,39 @@ class MiningMainnetTest(BitcoinTestFramework):
         with open(path) as f:
             blocks = json.load(f)
             n_blocks = len(blocks['timestamps'])
-            assert_equal(n_blocks, 2016)
+            assert_equal(n_blocks, RETARGET_PERIOD)
 
         # Mine up to the last block of the first retarget period
-        for i in range(2015):
+        for i in range(RETARGET_PERIOD - 1):
             prev_hash = self.mine(i + 1, prev_hash, blocks, node)
 
-        assert_equal(node.getblockcount(), 2015)
+        assert_equal(node.getblockcount(), RETARGET_PERIOD - 1)
 
         self.log.info("Check difficulty adjustment with getmininginfo")
         mining_info = node.getmininginfo()
-        assert_equal(mining_info['difficulty'], 1)
-        assert_equal(mining_info['bits'], nbits_str(DIFF_1_N_BITS))
-        assert_equal(mining_info['target'], target_str(DIFF_1_TARGET))
+        assert_difficulty(mining_info['difficulty'], GENESIS_N_BITS)
+        assert_equal(mining_info['bits'], nbits_str(GENESIS_N_BITS))
+        assert_equal(mining_info['target'], target_str(GENESIS_TARGET))
 
-        assert_equal(mining_info['next']['height'], 2016)
-        assert_equal(mining_info['next']['difficulty'], 4)
-        assert_equal(mining_info['next']['bits'], nbits_str(DIFF_4_N_BITS))
-        assert_equal(mining_info['next']['target'], target_str(DIFF_4_TARGET))
+        assert_equal(mining_info['next']['height'], RETARGET_PERIOD)
+        assert_difficulty(mining_info['next']['difficulty'], NEXT_N_BITS)
+        assert_equal(mining_info['next']['bits'], nbits_str(NEXT_N_BITS))
+        assert_equal(mining_info['next']['target'], target_str(NEXT_TARGET))
 
         # Mine first block of the second retarget period
-        height = 2016
+        height = RETARGET_PERIOD
         prev_hash = self.mine(height, prev_hash, blocks, node)
         assert_equal(node.getblockcount(), height)
 
         mining_info = node.getmininginfo()
-        assert_equal(mining_info['difficulty'], 4)
+        assert_difficulty(mining_info['difficulty'], NEXT_N_BITS)
 
         self.log.info("getblock RPC should show historical target")
         block_info = node.getblock(node.getblockhash(1))
 
-        assert_equal(block_info['difficulty'], 1)
-        assert_equal(block_info['bits'], nbits_str(DIFF_1_N_BITS))
-        assert_equal(block_info['target'], target_str(DIFF_1_TARGET))
+        assert_difficulty(block_info['difficulty'], GENESIS_N_BITS)
+        assert_equal(block_info['bits'], nbits_str(GENESIS_N_BITS))
+        assert_equal(block_info['target'], target_str(GENESIS_TARGET))
 
 
 if __name__ == '__main__':

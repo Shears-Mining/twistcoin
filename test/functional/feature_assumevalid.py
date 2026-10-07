@@ -15,15 +15,16 @@ We build a chain that includes an invalid signature for one of the transactions:
               output can be spent
     102:      a block containing a transaction spending the coinbase
               transaction output. The transaction has an invalid signature.
-    103-2202: bury the bad block with just over two weeks' worth of blocks
-              (2100 blocks)
+    103-10302: bury the bad block with just over two weeks' worth of blocks
+              (10200 blocks: TwistCoin's 2-minute blocks need 10080 for two weeks,
+              where Bitcoin's 10-minute blocks needed 2016)
 
 Start a few nodes:
 
-    - node0 has no -assumevalid parameter. Try to sync to block 2202. It will
+    - node0 has no -assumevalid parameter. Try to sync to block 10302. It will
       reject block 102 and only sync as far as block 101
     - node1 has -assumevalid set to the hash of block 102. Try to sync to
-      block 2202. node1 will sync all the way to block 2202.
+      block 10302. node1 will sync all the way to block 10302.
     - node2 has -assumevalid set to the hash of block 102. Try to sync to
       block 200. node2 will reject block 102 since it's assumed valid, but it
       isn't buried by at least two weeks' work.
@@ -112,7 +113,7 @@ class AssumeValidTest(BitcoinTestFramework):
         # Create a transaction spending the coinbase output with an invalid (null) signature
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.block1.vtx[0].txid_int, 0), scriptSig=b""))
-        tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(19 * 100000000, CScript([OP_TRUE])))
 
         block102 = create_block(self.tip, create_coinbase(height), self.block_time, txlist=[tx])
         self.block_time += 1
@@ -122,8 +123,8 @@ class AssumeValidTest(BitcoinTestFramework):
         self.block_time += 1
         height += 1
 
-        # Bury the assumed valid block 2100 deep
-        for _ in range(2100):
+        # Bury the assumed valid block 10200 deep (just over two weeks of 2-minute blocks)
+        for _ in range(10200):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.blocks.append(block)
@@ -141,8 +142,8 @@ class AssumeValidTest(BitcoinTestFramework):
         # nodes[0]
         self.log.info("Send blocks to node0. Block 102 will be rejected.")
         p2p0 = self.nodes[0].add_p2p_connection(BaseNode())
-        p2p0.send_header_for_blocks(self.blocks[0:2000])
-        p2p0.send_header_for_blocks(self.blocks[2000:])
+        for i in range(0, len(self.blocks), 2000):
+            p2p0.send_header_for_blocks(self.blocks[i:i + 2000])
         with self.nodes[0].assert_debug_log(expected_msgs=[
             f"Enabling script verification at block #1 ({block_1_hash}): assumevalid=0 (always verify).",
         ]):
@@ -159,8 +160,8 @@ class AssumeValidTest(BitcoinTestFramework):
         # nodes[1]
         self.log.info("Send all blocks to node1. All blocks will be accepted.")
         p2p1 = self.nodes[1].add_p2p_connection(BaseNode())
-        p2p1.send_header_for_blocks(self.blocks[0:2000])
-        p2p1.send_header_for_blocks(self.blocks[2000:])
+        for i in range(0, len(self.blocks), 2000):
+            p2p1.send_header_for_blocks(self.blocks[i:i + 2000])
         with self.nodes[1].assert_debug_log(expected_msgs=[
             f"Disabling script verification at block #1 ({self.blocks[0].hash_hex}).",
         ]):
@@ -168,11 +169,11 @@ class AssumeValidTest(BitcoinTestFramework):
         with self.nodes[1].assert_debug_log(expected_msgs=[
             f"Enabling script verification at block #103 ({self.blocks[102].hash_hex}): block height above assumevalid height.",
         ]):
-            for i in range(1, 2202):
+            for i in range(1, len(self.blocks)):
                 p2p1.send_without_ping(msg_block(self.blocks[i]))
-            # Syncing 2200 blocks can take a while on slow systems. Give it plenty of time to sync.
+            # Syncing 10300 blocks can take a while on slow systems. Give it plenty of time to sync.
             p2p1.sync_with_ping(timeout=960)
-            assert_equal(self.nodes[1].getblockcount(), 2202)
+            assert_equal(self.nodes[1].getblockcount(), len(self.blocks))
 
         # nodes[2]
         self.log.info("Send blocks to node2. Block 102 will be rejected.")

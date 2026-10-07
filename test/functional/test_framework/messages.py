@@ -88,10 +88,10 @@ TX_MIN_STANDARD_VERSION = 1
 TX_MAX_STANDARD_VERSION = 3
 
 MAGIC_BYTES = {
-    "mainnet": b"\xf9\xbe\xb4\xd9",
-    "testnet4": b"\x1c\x16\x3f\x28",
-    "regtest": b"\xfa\xbf\xb5\xda",
-    "signet": b"\x0a\x03\xcf\x40",
+    "mainnet": b"\x7f\x87\xc0\x69",
+    "testnet4": b"\x4d\x36\x99\xdd",
+    "regtest": b"\x47\x6d\x7a\x51",
+    "signet": b"\x8e\xc3\x33\x57",  # TwistCoin default signet challenge
 }
 
 def sha256(s):
